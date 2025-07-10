@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>District Checker</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUvlO6tzA1z961W-2_-7EEZ1Icd6ZtcSg&libraries=places"></script>
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .autocomplete-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    #address {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Is your address in the district?</h2>
+  <div class="autocomplete-container">
+    <input type="text" id="address" placeholder="Enter address">
+  </div>
+  <button onclick="checkAddress()">Check</button>
+  <p id="result"></p>
+
+  <script>
+    let districtGeoJSON = null;
+
+    // Load district coordinates from external JSON file
+    async function loadDistrictData() {
+      try {
+        const response = await fetch('geo.json');
+        districtGeoJSON = await response.json();
+        console.log('District data loaded successfully');
+      } catch (error) {
+        console.error('Error loading district data:', error);
+        document.getElementById('result').textContent = 'Error loading district data';
+      }
+    }
+
+    // Initialize autocomplete when the page loads
+    let autocomplete;
+    function initAutocomplete() {
+      autocomplete = new google.maps.places.Autocomplete(
+        document.getElementById('address'),
+        {
+          types: ['address'],
+          componentRestrictions: { country: 'us' }
+        }
+      );
+      
+      // Add listener for place selection
+      autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          // Automatically check the address when user selects from autocomplete
+          checkSelectedPlace(place);
+        }
+      });
+    }
+
+    function checkSelectedPlace(place) {
+      if (!districtGeoJSON) {
+        document.getElementById('result').textContent = 'District data not loaded yet';
+        return;
+      }
+
+      const location = place.geometry.location;
+      const point = turf.point([location.lng(), location.lat()]);
+      const polygon = turf.polygon([districtGeoJSON.coordinates]);
+
+      const inside = turf.booleanPointInPolygon(point, polygon);
+      document.getElementById('result').textContent =
+        inside ? '✅ Inside the district' : '❌ Outside the district';
+    }
+
+    function checkAddress() {
+      if (!districtGeoJSON) {
+        document.getElementById('result').textContent = 'District data not loaded yet';
+        return;
+      }
+
+      const address = document.getElementById('address').value;
+      const geocoder = new google.maps.Geocoder();
+
+      geocoder.geocode({ address: address }, function(results, status) {
+        if (status === 'OK') {
+          const location = results[0].geometry.location;
+          const point = turf.point([location.lng(), location.lat()]);
+          const polygon = turf.polygon([districtGeoJSON.coordinates]);
+
+          const inside = turf.booleanPointInPolygon(point, polygon);
+          document.getElementById('result').textContent =
+            inside ? '✅ Inside the district' : '❌ Outside the district';
+        } else {
+          document.getElementById('result').textContent = 'Geocoding failed: ' + status;
+        }
+      });
+    }
+
+    // Initialize everything when the page loads
+    window.onload = async function() {
+      await loadDistrictData();
+      initAutocomplete();
+    };
+  </script>
+</body>
+</html>
