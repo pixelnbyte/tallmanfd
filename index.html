@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUvlO6tzA1z961W-2_-7EEZ1Icd6ZtcSg&libraries=places"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -13,9 +18,25 @@
         padding: 20px;
       }
 
+      .address-form {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+      }
+
       .autocomplete-container {
         position: relative;
         margin-bottom: 20px;
+        flex-grow: 8;
+      }
+
+      #use-current-location {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        color: #1976d2;
+        flex-grow: 2;
+        padding: auto;
       }
 
       #address {
@@ -41,75 +62,86 @@
         background-color: #45a049;
       }
 
+      button.disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
       #result {
         margin-top: 20px;
         padding: 10px;
         border-radius: 4px;
         font-weight: bold;
       }
+      .btn-link {
+        display: inline-block;
+        padding: 8px 16px;
+        margin: 4px 4px 4px 0;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+      }
     </style>
   </head>
 
   <body>
     <h2>Is your address in the Tallman Fire District?</h2>
-    <div class="autocomplete-container">
-      <input type="text" id="address" placeholder="Enter address" />
+    <div class="address-form">
+      <div class="autocomplete-container" id="autocomplete-container">
+        <input
+          type="text"
+          id="address"
+          placeholder="Enter address"
+          onchange="addressChanged(this.value)"
+          autocomplete="off"
+        />
+      </div>
+      <div id="use-current-location" style="display: none">
+        <a
+          onclick="useCurrentLocation()"
+          style="margin-top: 10px; cursor: pointer; font-size: 16px"
+        >
+          <i class="fas fa-map-marker-alt" style="margin-right: 8px"></i>
+          Use Current Location
+        </a>
+      </div>
     </div>
-    <button onclick="handleSubmit()">Check</button>
-    <div id="use-current-location"></div>
+
+    <button
+      onclick="handleSubmit()"
+      id="check-button"
+      disabled
+      class="disabled"
+    >
+      Check
+    </button>
+
     <p id="result"></p>
 
     <div id="links" style="display: none; margin-top: 20px; text-align: center">
       <button
+        class="btn-link"
         onclick="logAndRedirect('https://voterlookup.elections.ny.gov', 'voter-check')"
-        style="
-          display: inline-block;
-          padding: 8px 16px;
-          margin: 4px 4px 4px 0;
-          background-color: #1976d2;
-          color: #fff;
-          text-decoration: none;
-          border-radius: 4px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-        "
+        style="background-color: #1976d2"
       >
         Check if you are registered to vote
       </button>
 
       <button
+        class="btn-link"
         onclick="logAndRedirect('https://elections.ny.gov/voter-registration-process', 'voter-register')"
-        style="
-          display: inline-block;
-          padding: 8px 16px;
-          margin: 4px 4px 4px 0;
-          background-color: #388e3c;
-          color: #fff;
-          text-decoration: none;
-          border-radius: 4px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-        "
+        style="background-color: #388e3c"
       >
         Register to vote
       </button>
 
       <button
+        class="btn-link"
         onclick="logAndRedirect('https://chat.whatsapp.com/CV7rMftauLY3JrCOF6I8o9', 'whatsapp')"
-        style="
-          display: inline-block;
-          padding: 8px 16px;
-          margin: 4px 0;
-          background-color: #25d366;
-          color: #fff;
-          text-decoration: none;
-          border-radius: 4px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-        "
+        style="background-color: #25d366"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -222,6 +254,7 @@
 
         // Add listener for place selection
         autocomplete.addListener("place_changed", function () {
+          addressChanged();
           const place = autocomplete.getPlace();
           if (place.geometry) {
             // Automatically check the address when user selects from autocomplete
@@ -274,8 +307,23 @@
         });
       }
 
+      function addressChanged() {
+        const value = document.getElementById("address").value;
+        // Enable the button if the address is not empty
+        const button = document.querySelector("button#check-button");
+        if (!button) return;
+        if (value.trim() !== "") {
+          button.classList.remove("disabled");
+          button.disabled = false;
+        } else {
+          button.classList.add("disabled");
+          button.disabled = true;
+        }
+      }
+
       function checkAddress() {
         const address = document.getElementById("address").value;
+        if (!address) return;
         const geocoder = new google.maps.Geocoder();
 
         geocoder.geocode({ address: address }, function (results, status) {
@@ -336,11 +384,7 @@
         const useCurrentLocationDiv = document.getElementById(
           "use-current-location"
         );
-        useCurrentLocationDiv.innerHTML = `
-        <a onclick="useCurrentLocation()" style="margin-top: 10px; cursor: pointer; font-size: 16px;">
-          Use Current Location
-        </a>
-      `;
+        useCurrentLocationDiv.style.display = "block";
       }
 
       function useCurrentLocation() {
@@ -364,9 +408,11 @@
                   geometry: { location: { lat: () => lat, lng: () => lng } },
                   formatted_address,
                 });
+                addressChanged();
               }
               //remove the use current location link
-              document.getElementById("use-current-location").innerHTML = "";
+              document.getElementById("use-current-location").style.display =
+                "none";
             }
           });
       }
