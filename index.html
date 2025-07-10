@@ -170,7 +170,7 @@
     }
 
   function logSubmission(address, insideDistrict) {
-    fetch("https://script.google.com/macros/s/AKfycbzpLrmUB9vPDe8x3WxkxXdwkr_49Nyw7-DDLSZoX8XviKxMxs2uI69lw-qUlBtnCSNFZw/exec", {
+    fetch("https://script.google.com/macros/s/AKfycbwXu1v_NorWZi0As5vzFBdrNWt09HSHcWs9xo_GnEL3-Z4zlJpLdsm0c7xek81vyLFYXQ/exec", {
       method: "POST",
       body: JSON.stringify({
         address: address,
@@ -179,7 +179,10 @@
       headers: {
         "Content-Type": "application/json"
       }
-    });
+    })
+    .then(response => response.text())
+    .then(data => console.log("Logged:", data))
+    .catch(err => console.error("Error logging:", err));
   }
 
 
