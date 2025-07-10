@@ -160,7 +160,7 @@
 
       const inside = turf.booleanPointInPolygon(point, polygon);
       document.getElementById('result').textContent =
-        inside ? '✅ Inside the district' : '❌ Outside the district';
+        inside ? '✅ Your address is inside the district. <br> <a href="https://voterlookup.elections.ny.gov" target="_blank">Check if you are registered to vote</a> <a href="https://elections.ny.gov/voter-registration-process" target="_blank">Register to vote</a>.' : '❌ Outside the district';
     }
 
     function checkAddress() {
