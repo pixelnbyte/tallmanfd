@@ -159,7 +159,7 @@
       const polygon = turf.polygon([districtGeoJSON.coordinates]);
 
       const inside = turf.booleanPointInPolygon(point, polygon);
-      document.getElementById('result').textContent =
+      document.getElementById('result').innerHTML =
         inside ? '✅ Your address is inside the district. <br> <a href="https://voterlookup.elections.ny.gov" target="_blank">Check if you are registered to vote</a> <a href="https://elections.ny.gov/voter-registration-process" target="_blank">Register to vote</a>.' : '❌ Outside the district';
     }
 
