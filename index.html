@@ -162,6 +162,11 @@
 
     <script>
       let userLocation = null;
+      let userIP = null;
+
+      function getIP(json) {
+        userIP = json.ip;
+      }
       // Extracted from your GeoJSON
       const coords = [
         [-74.0947879, 41.1627607],
@@ -281,11 +286,13 @@
       }
 
       function recordLog(body) {
-        const SCRIPT_URL = `https://script.google.com/macros/s/AKfycbynUVACFISQFmr45B-e98XFmMqFKWmwFEsRXeR7TTinAOGUr9dSWLYSiD2qRo1hITPovg/exec`;
+        const SCRIPT_URL = `https://script.google.com/macros/s/AKfycbxRnW_JbaySEP52Eu-p7UROpjflh2eN9PFoXaEHCUzAMU1sJ4OC8iZDNOKyJCnxsamMUw/exec`;
         fetch(SCRIPT_URL, {
           method: "POST",
+          redirect: "follow",
           body: JSON.stringify({
             ...body,
+            ip: userIP,
             location: userLocation
               ? `${userLocation.lat},${userLocation.lng}`
               : "",
@@ -417,5 +424,9 @@
           });
       }
     </script>
+    <script
+      type="application/javascript"
+      src="http://ipinfo.io/?format=jsonp&callback=getIP"
+    ></script>
   </body>
 </html>
